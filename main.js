@@ -3,8 +3,10 @@ const path = require('path');
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
-    width: 400,
-    height: 600,
+    width: 800,
+    height: 560,
+    minWidth: 620,
+    minHeight: 420,
     title: 'ClipVault',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
