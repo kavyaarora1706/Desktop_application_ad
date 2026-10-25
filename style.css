@@ -1,50 +1,86 @@
-/* ClipVault Design System & Layout */
+/* ==========================================================================
+   ClipVault - Desktop Stylesheet (Stage 3)
+   Aesthetic: Polished, modern dark desktop with charcoal & subtle green accents
+   ========================================================================== */
+
 :root {
-  --bg-primary: #121316;
-  --bg-secondary: #1a1b1f;
-  --bg-surface: #222329;
-  --bg-surface-hover: #2a2b33;
-  --bg-surface-active: #31333d;
-  
-  --border-subtle: rgba(255, 255, 255, 0.07);
-  --border-medium: rgba(255, 255, 255, 0.12);
-  --border-focus: #6366f1;
+  /* Charcoal & Near-black Palette */
+  --bg-app: #0d0f12;
+  --bg-sidebar: #13161a;
+  --bg-header: rgba(13, 15, 18, 0.88);
+  --bg-card: #181b20;
+  --bg-card-hover: #1f232a;
+  --bg-card-active: #242932;
+  --bg-code: #101215;
+  --bg-input: #13161b;
+  --bg-input-focus: #161a20;
 
-  --text-primary: #f3f4f6;
-  --text-secondary: #9ca3af;
-  --text-muted: #6b7280;
+  /* Borders & Dividers */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-medium: rgba(255, 255, 255, 0.10);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --border-input: rgba(255, 255, 255, 0.09);
 
-  --accent-primary: #6366f1;
-  --accent-hover: #4f46e5;
-  --accent-subtle: rgba(99, 102, 241, 0.15);
+  /* Subtle Green Accents (Emerald / Mint) */
+  --accent-green: #10b981;
+  --accent-green-hover: #059669;
+  --accent-green-light: #34d399;
+  --accent-green-subtle: rgba(16, 185, 129, 0.12);
+  --accent-green-glow: rgba(16, 185, 129, 0.25);
+  --border-accent: rgba(16, 185, 129, 0.35);
 
-  --badge-text-bg: rgba(59, 130, 246, 0.16);
-  --badge-text-color: #60a5fa;
-  --badge-code-bg: rgba(16, 185, 129, 0.16);
+  /* Typography / Text Colors */
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #788596;
+  --text-dim: #4b5563;
+
+  /* Type Badges */
+  --badge-text-bg: rgba(255, 255, 255, 0.07);
+  --badge-text-color: #cbd5e1;
+  --badge-code-bg: rgba(16, 185, 129, 0.14);
   --badge-code-color: #34d399;
-  --badge-link-bg: rgba(245, 158, 11, 0.16);
-  --badge-link-color: #fbbf24;
+  --badge-link-bg: rgba(52, 211, 153, 0.12);
+  --badge-link-color: #6ee7b7;
 
-  --pin-color: #fbbf24;
+  /* Pin Indicator */
+  --pin-color: #f59e0b;
+  --pin-subtle: rgba(245, 158, 11, 0.14);
+  --border-pinned: rgba(245, 158, 11, 0.28);
+
+  /* Motion & Easing */
+  --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 0.15s;
+  --duration-normal: 0.22s;
 }
 
-* {
+/* Base Reset */
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+html, body {
+  height: 100%;
+  width: 100%;
+}
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background-color: var(--bg-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg-app);
   color: var(--text-primary);
   height: 100vh;
   overflow: hidden;
+  user-select: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-/* App Container */
+/* Top-level Layout */
 .app-layout {
   display: flex;
   height: 100vh;
@@ -52,44 +88,51 @@ body {
   overflow: hidden;
 }
 
-/* Left Sidebar */
+/* ==========================================================================
+   Left Sidebar Navigation
+   ========================================================================== */
 .sidebar {
-  width: 230px;
-  min-width: 200px;
+  width: 224px;
+  min-width: 190px;
   max-width: 260px;
-  background-color: var(--bg-secondary);
+  flex-shrink: 0;
+  background-color: var(--bg-sidebar);
   border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
-  padding: 18px 14px;
-  user-select: none;
+  padding: 16px 12px;
+  position: relative;
+  z-index: 10;
 }
 
+/* Brand Section */
 .sidebar-brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 10px 22px 10px;
+  padding: 6px 8px 18px 8px;
   border-bottom: 1px solid var(--border-subtle);
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .brand-icon {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: #ffffff;
+  background: linear-gradient(145deg, #16241c 0%, #1a2f24 100%);
+  border: 1px solid var(--border-accent);
+  color: var(--accent-green-light);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
 }
 
 .brand-name {
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-weight: 700;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.2px;
   color: var(--text-primary);
 }
 
@@ -102,7 +145,11 @@ body {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
+}
+
+.nav-item {
+  width: 100%;
 }
 
 .nav-btn {
@@ -112,29 +159,56 @@ body {
   gap: 10px;
   padding: 8px 12px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: 7px;
   background: transparent;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-size: 0.88rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s ease-in-out;
+  position: relative;
+  transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease, border-color var(--duration-fast) ease;
   text-align: left;
+  outline: none;
 }
 
 .nav-btn:hover {
-  background-color: var(--bg-surface);
-  color: var(--text-primary);
+  background-color: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
 }
 
+.nav-btn:focus-visible {
+  box-shadow: 0 0 0 2px var(--border-accent);
+}
+
+/* Visually clear Active state with green accent indicator */
 .nav-btn.active {
-  background-color: var(--accent-subtle);
-  color: var(--accent-primary);
-  border-color: rgba(99, 102, 241, 0.3);
+  background-color: var(--accent-green-subtle);
+  color: var(--text-primary);
+  font-weight: 600;
+  border-color: rgba(16, 185, 129, 0.22);
+}
+
+.nav-btn.active::before {
+  content: "";
+  position: absolute;
+  left: -2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 18px;
+  background-color: var(--accent-green);
+  border-radius: 0 3px 3px 0;
+  box-shadow: 0 0 8px var(--accent-green-glow);
+}
+
+.nav-icon {
+  flex-shrink: 0;
+  color: currentColor;
+  transition: stroke var(--duration-fast) ease;
 }
 
 .nav-btn.active .nav-icon {
-  stroke: var(--accent-primary);
+  stroke: var(--accent-green-light);
 }
 
 .nav-label {
@@ -142,37 +216,46 @@ body {
 }
 
 .nav-count {
-  font-size: 0.75rem;
-  padding: 2px 7px;
-  background-color: rgba(255, 255, 255, 0.08);
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 1px 7px;
+  background-color: rgba(255, 255, 255, 0.06);
   border-radius: 10px;
   color: var(--text-muted);
+  line-height: 1.4;
+  transition: all var(--duration-fast) ease;
 }
 
 .nav-btn.active .nav-count {
-  background-color: rgba(99, 102, 241, 0.25);
-  color: var(--accent-primary);
+  background-color: rgba(16, 185, 129, 0.22);
+  color: var(--accent-green-light);
+  font-weight: 600;
 }
 
-/* Main Content Area */
+/* ==========================================================================
+   Main Content Area
+   ========================================================================== */
 .main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: var(--bg-primary);
+  background-color: var(--bg-app);
   min-width: 0;
   overflow: hidden;
+  position: relative;
 }
 
 /* Content Header */
 .content-header {
-  padding: 22px 28px 16px 28px;
+  padding: 20px 26px 16px 26px;
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  background: rgba(18, 19, 22, 0.85);
-  backdrop-filter: blur(12px);
+  gap: 14px;
+  background-color: var(--bg-header);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: 5;
 }
 
 .header-heading-row {
@@ -182,14 +265,15 @@ body {
 }
 
 .content-title {
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   font-weight: 700;
-  letter-spacing: -0.4px;
+  letter-spacing: -0.3px;
   color: var(--text-primary);
 }
 
 .content-subtitle {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 400;
   color: var(--text-muted);
 }
 
@@ -202,21 +286,32 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-medium);
-  border-radius: 9px;
-  padding: 8px 14px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-input);
+  border-radius: 8px;
+  padding: 8px 12px;
+  transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease, background-color var(--duration-fast) ease;
+}
+
+.search-box:hover {
+  border-color: var(--border-medium);
+  background-color: #15181e;
 }
 
 .search-box:focus-within {
-  border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  background-color: var(--bg-input-focus);
+  border-color: var(--accent-green);
+  box-shadow: 0 0 0 3px var(--accent-green-subtle);
 }
 
 .search-icon {
-  color: var(--text-muted);
+  color: var(--text-dim);
   flex-shrink: 0;
+  transition: color var(--duration-fast) ease;
+}
+
+.search-box:focus-within .search-icon {
+  color: var(--accent-green-light);
 }
 
 .search-input {
@@ -224,51 +319,67 @@ body {
   background: transparent;
   border: none;
   outline: none;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   color: var(--text-primary);
   font-family: inherit;
 }
 
 .search-input::placeholder {
-  color: var(--text-muted);
+  color: var(--text-dim);
 }
 
-/* Clipboard History Container */
+/* ==========================================================================
+   Clipboard History Container & Cards
+   ========================================================================== */
 .clipboard-history {
   flex: 1;
   overflow-y: auto;
-  padding: 20px 28px;
+  padding: 18px 26px 24px 26px;
 }
 
 .clip-list {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 11px;
 }
 
 /* Clip Card Item */
 .clip-item {
-  background-color: var(--bg-surface);
+  background-color: var(--bg-card);
   border: 1px solid var(--border-subtle);
-  border-radius: 10px;
-  padding: 14px 16px;
+  border-radius: 9px;
+  padding: 13px 15px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+  gap: 9px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform var(--duration-normal) var(--ease-smooth),
+              border-color var(--duration-normal) var(--ease-smooth),
+              background-color var(--duration-normal) var(--ease-smooth),
+              box-shadow var(--duration-normal) var(--ease-smooth);
+  position: relative;
 }
 
 .clip-item:hover {
-  background-color: var(--bg-surface-hover);
+  background-color: var(--bg-card-hover);
   border-color: var(--border-medium);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 }
 
+/* Pinned Card Styling */
 .clip-item.is-pinned {
-  border-color: rgba(251, 191, 36, 0.3);
-  background: linear-gradient(180deg, rgba(251, 191, 36, 0.04) 0%, var(--bg-surface) 100%);
+  border-color: var(--border-pinned);
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.03) 0%, var(--bg-card) 100%);
 }
 
+.clip-item.is-pinned:hover {
+  border-color: rgba(245, 158, 11, 0.4);
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.05) 0%, var(--bg-card-hover) 100%);
+}
+
+/* Card Header */
 .clip-item-header {
   display: flex;
   align-items: center;
@@ -281,13 +392,15 @@ body {
   gap: 8px;
 }
 
+/* Badges */
 .badge {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 600;
   padding: 2px 7px;
   border-radius: 4px;
   text-transform: uppercase;
   letter-spacing: 0.4px;
+  line-height: 1.35;
 }
 
 .badge-text {
@@ -298,31 +411,37 @@ body {
 .badge-code {
   background-color: var(--badge-code-bg);
   color: var(--badge-code-color);
+  border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 .badge-link {
   background-color: var(--badge-link-bg);
   color: var(--badge-link-color);
+  border: 1px solid rgba(52, 211, 153, 0.2);
 }
 
 .pin-status {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  font-size: 0.75rem;
+  gap: 4px;
+  font-size: 0.72rem;
   font-weight: 500;
   color: var(--pin-color);
+  background-color: var(--pin-subtle);
+  padding: 1px 6px;
+  border-radius: 4px;
 }
 
 .clip-time {
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   color: var(--text-muted);
 }
 
+/* Action Buttons */
 .clip-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
 }
 
 .btn-action {
@@ -335,60 +454,85 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  transition: all var(--duration-fast) ease;
+  outline: none;
 }
 
 .btn-action:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.08);
   color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.btn-action:active {
+  transform: scale(0.92);
+}
+
+.btn-action:focus-visible {
+  box-shadow: 0 0 0 2px var(--border-accent);
 }
 
 .btn-action.active {
   color: var(--pin-color);
+  background-color: var(--pin-subtle);
 }
 
+/* Card Body */
 .clip-item-body {
   overflow: hidden;
 }
 
 .clip-text {
-  font-size: 0.9rem;
-  line-height: 1.45;
-  color: var(--text-primary);
+  font-size: 0.88rem;
+  line-height: 1.48;
+  color: var(--text-secondary);
   word-break: break-word;
 }
 
 .clip-url {
-  color: #60a5fa;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  color: var(--accent-green-light);
+  text-decoration: none;
+  border-bottom: 1px dashed rgba(52, 211, 153, 0.4);
+  display: inline-block;
+  transition: color var(--duration-fast) ease, border-color var(--duration-fast) ease;
+}
+
+.clip-url:hover {
+  color: #a7f3d0;
+  border-bottom-style: solid;
+  border-bottom-color: var(--accent-green-light);
 }
 
 .clip-code {
-  background-color: rgba(0, 0, 0, 0.35);
-  border: 1px solid var(--border-subtle);
+  background-color: var(--bg-code);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 6px;
   padding: 8px 10px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.82rem;
-  color: #e5e7eb;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #e2e8f0;
   overflow-x: auto;
   white-space: pre-wrap;
   word-break: break-all;
 }
 
+/* Card Footer */
 .clip-item-footer {
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  padding-top: 2px;
 }
 
 .clip-detail {
-  font-size: 0.72rem;
-  color: var(--text-muted);
+  font-size: 0.7rem;
+  color: var(--text-dim);
 }
 
-/* Accessibility utility */
+/* ==========================================================================
+   Utilities & Responsive Sizing for Desktop Windows
+   ========================================================================== */
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -401,7 +545,7 @@ body {
   border: 0;
 }
 
-/* Custom Scrollbar */
+/* Custom Charcoal & Green Scrollbar */
 .clipboard-history::-webkit-scrollbar {
   width: 6px;
 }
@@ -411,10 +555,58 @@ body {
 }
 
 .clipboard-history::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.12);
+  background-color: rgba(255, 255, 255, 0.1);
   border-radius: 3px;
+  transition: background-color var(--duration-fast) ease;
 }
 
 .clipboard-history::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.22);
+  background-color: rgba(16, 185, 129, 0.4);
+}
+
+/* Responsive Desktop Breakpoints */
+@media (max-width: 720px) {
+  .sidebar {
+    width: 190px;
+    padding: 14px 10px;
+  }
+
+  .sidebar-brand {
+    padding-bottom: 14px;
+    margin-bottom: 12px;
+  }
+
+  .content-header {
+    padding: 16px 18px 14px 18px;
+    gap: 12px;
+  }
+
+  .clipboard-history {
+    padding: 14px 18px 20px 18px;
+  }
+
+  .content-title {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-height: 520px) {
+  .sidebar-brand {
+    padding-top: 2px;
+    padding-bottom: 10px;
+    margin-bottom: 8px;
+  }
+
+  .content-header {
+    padding: 12px 20px 10px 20px;
+    gap: 10px;
+  }
+
+  .content-title {
+    font-size: 1.2rem;
+  }
+
+  .clipboard-history {
+    padding: 12px 20px 16px 20px;
+  }
 }
