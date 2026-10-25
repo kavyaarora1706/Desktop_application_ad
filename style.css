@@ -477,6 +477,11 @@ body {
   background-color: var(--pin-subtle);
 }
 
+.btn-action.copied {
+  color: var(--accent-green-light) !important;
+  background-color: var(--accent-green-subtle) !important;
+}
+
 /* Card Body */
 .clip-item-body {
   overflow: hidden;
@@ -487,6 +492,10 @@ body {
   line-height: 1.48;
   color: var(--text-secondary);
   word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .clip-url {
@@ -512,7 +521,8 @@ body {
   font-size: 0.8rem;
   line-height: 1.45;
   color: #e2e8f0;
-  overflow-x: auto;
+  max-height: 120px;
+  overflow: hidden;
   white-space: pre-wrap;
   word-break: break-all;
 }
@@ -521,13 +531,77 @@ body {
 .clip-item-footer {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  padding-top: 2px;
+  justify-content: space-between;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.clip-id-label {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  background-color: rgba(255, 255, 255, 0.04);
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .clip-detail {
   font-size: 0.7rem;
   color: var(--text-dim);
+}
+
+/* ==========================================================================
+   Empty State
+   ========================================================================== */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 24px;
+  height: 100%;
+  min-height: 320px;
+  animation: fadeIn 0.25s ease;
+}
+
+.empty-state[hidden] {
+  display: none !important;
+}
+
+.empty-state-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 14px;
+  background-color: #14171c;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--accent-green-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.empty-state-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.empty-state-text {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  max-width: 300px;
+  line-height: 1.5;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ==========================================================================

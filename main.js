@@ -4,33 +4,8 @@ const clipboardMonitor = require('./src/clipboard.js');
 
 let mainWindow = null;
 
-// Initial in-memory items
-const initialHistory = [
-  {
-    id: 'placeholder-1',
-    text: 'Welcome to ClipVault! Your clipboard history will appear here in real-time as you copy content.',
-    type: 'text',
-    pinned: false,
-    timestamp: Date.now() - 120000,
-    characterCount: 92
-  },
-  {
-    id: 'placeholder-2',
-    text: 'git remote add origin https://github.com/kavyaarora1706/Desktop_application_ad.git',
-    type: 'code',
-    pinned: true,
-    timestamp: Date.now() - 1680000,
-    characterCount: 79
-  },
-  {
-    id: 'placeholder-3',
-    text: 'https://www.electronjs.org/docs/latest/api/clipboard',
-    type: 'link',
-    pinned: false,
-    timestamp: Date.now() - 7200000,
-    characterCount: 50
-  }
-];
+// Real in-memory items (starting empty)
+const initialHistory = [];
 
 // Register IPC handlers with input validation
 function registerIpcHandlers() {

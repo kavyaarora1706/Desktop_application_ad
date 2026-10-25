@@ -14,7 +14,7 @@
       <div class="sidebar-brand">
         <div class="brand-icon" aria-hidden="true">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1 2-2h2"></path>
             <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
           </svg>
         </div>
@@ -32,7 +32,7 @@
                 <rect x="3" y="14" width="7" height="7"></rect>
               </svg>
               <span class="nav-label">All Clips</span>
-              <span class="nav-count" aria-label="3 items">3</span>
+              <span class="nav-count" id="count-all-clips" aria-label="0 items">0</span>
             </button>
           </li>
           <li class="nav-item">
@@ -42,7 +42,7 @@
                 <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.89A2 2 0 0 1 15 10.77V6a3 3 0 0 0-6 0v4.77a2 2 0 0 1-1.11 1.79l-1.78.89A2 2 0 0 0 5 15.24Z"></path>
               </svg>
               <span class="nav-label">Pinned</span>
-              <span class="nav-count" aria-label="1 pinned item">1</span>
+              <span class="nav-count" id="count-pinned" aria-label="0 pinned items">0</span>
             </button>
           </li>
           <li class="nav-item">
@@ -63,7 +63,7 @@
       <header class="content-header">
         <div class="header-heading-row">
           <h1 class="content-title">All Clips</h1>
-          <span class="content-subtitle">3 clips stored</span>
+          <span class="content-subtitle" id="content-subtitle">0 clips stored</span>
         </div>
 
         <div class="search-container">
@@ -87,104 +87,20 @@
 
       <!-- Clipboard History Container -->
       <section class="clipboard-history" aria-label="Clipboard history">
-        <ul class="clip-list" id="clip-list" role="list">
-          <!-- Placeholder Entry 1: Standard Text -->
-          <li class="clip-item" data-id="placeholder-1">
-            <div class="clip-item-header">
-              <div class="clip-meta">
-                <span class="badge badge-text">Text</span>
-                <time class="clip-time" datetime="2026-10-25T17:15:00">2 mins ago</time>
-              </div>
-              <div class="clip-actions">
-                <button type="button" class="btn-action" title="Pin clip" aria-label="Pin clip">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <line x1="12" y1="17" x2="12" y2="22"></line>
-                    <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.89A2 2 0 0 1 15 10.77V6a3 3 0 0 0-6 0v4.77a2 2 0 0 1-1.11 1.79l-1.78.89A2 2 0 0 0 5 15.24Z"></path>
-                  </svg>
-                </button>
-                <button type="button" class="btn-action" title="Copy to clipboard" aria-label="Copy to clipboard">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div class="clip-item-body">
-              <p class="clip-text">Welcome to ClipVault! Your clipboard history will appear here in real-time as you copy content.</p>
-            </div>
-            <div class="clip-item-footer">
-              <span class="clip-detail">92 characters</span>
-            </div>
-          </li>
+        <!-- Empty State Container -->
+        <div class="empty-state" id="empty-state" hidden>
+          <div class="empty-state-icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+            </svg>
+          </div>
+          <h2 class="empty-state-title">No clips yet</h2>
+          <p class="empty-state-text">Copy text, links, or code from other applications and ClipVault will capture it automatically.</p>
+        </div>
 
-          <!-- Placeholder Entry 2: Pinned Code -->
-          <li class="clip-item is-pinned" data-id="placeholder-2">
-            <div class="clip-item-header">
-              <div class="clip-meta">
-                <span class="badge badge-code">Code</span>
-                <span class="pin-status" title="Pinned item">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" aria-hidden="true">
-                    <line x1="12" y1="17" x2="12" y2="22"></line>
-                    <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.89A2 2 0 0 1 15 10.77V6a3 3 0 0 0-6 0v4.77a2 2 0 0 1-1.11 1.79l-1.78.89A2 2 0 0 0 5 15.24Z"></path>
-                  </svg>
-                  Pinned
-                </span>
-                <time class="clip-time" datetime="2026-10-25T16:50:00">28 mins ago</time>
-              </div>
-              <div class="clip-actions">
-                <button type="button" class="btn-action active" title="Unpin clip" aria-label="Unpin clip">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <line x1="12" y1="17" x2="12" y2="22"></line>
-                    <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.89A2 2 0 0 1 15 10.77V6a3 3 0 0 0-6 0v4.77a2 2 0 0 1-1.11 1.79l-1.78.89A2 2 0 0 0 5 15.24Z"></path>
-                  </svg>
-                </button>
-                <button type="button" class="btn-action" title="Copy to clipboard" aria-label="Copy to clipboard">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div class="clip-item-body">
-              <pre class="clip-code"><code>git remote add origin https://github.com/kavyaarora1706/Desktop_application_ad.git</code></pre>
-            </div>
-            <div class="clip-item-footer">
-              <span class="clip-detail">79 characters</span>
-            </div>
-          </li>
-
-          <!-- Placeholder Entry 3: Link -->
-          <li class="clip-item" data-id="placeholder-3">
-            <div class="clip-item-header">
-              <div class="clip-meta">
-                <span class="badge badge-link">Link</span>
-                <time class="clip-time" datetime="2026-10-25T15:10:00">2 hours ago</time>
-              </div>
-              <div class="clip-actions">
-                <button type="button" class="btn-action" title="Pin clip" aria-label="Pin clip">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <line x1="12" y1="17" x2="12" y2="22"></line>
-                    <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.89A2 2 0 0 1 15 10.77V6a3 3 0 0 0-6 0v4.77a2 2 0 0 1-1.11 1.79l-1.78.89A2 2 0 0 0 5 15.24Z"></path>
-                  </svg>
-                </button>
-                <button type="button" class="btn-action" title="Copy to clipboard" aria-label="Copy to clipboard">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div class="clip-item-body">
-              <p class="clip-text clip-url">https://www.electronjs.org/docs/latest/api/clipboard</p>
-            </div>
-            <div class="clip-item-footer">
-              <span class="clip-detail">50 characters</span>
-            </div>
-          </li>
-        </ul>
+        <!-- Dynamic History List -->
+        <ul class="clip-list" id="clip-list" role="list"></ul>
       </section>
     </main>
   </div>
