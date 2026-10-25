@@ -1,0 +1,20 @@
+{
+  "name": "clipvault",
+  "version": "1.0.0",
+  "description": "Smart clipboard history manager for macOS",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [
+    "clipboard",
+    "macos",
+    "electron"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^45.0.0",
+    "electron-builder": "^26.18.0"
+  }
+}
