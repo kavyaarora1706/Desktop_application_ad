@@ -1,20 +1,25 @@
-// renderer.js - ClipVault Renderer Process (Stage 8)
-// Handles live history rendering, safe textContent escaping, instant search filtering, and empty states
+// renderer.js - ClipVault Renderer Process (Stage 10)
+// Features: Live clipboard history, pinned sorting/views, persistence survival, instant search, copy feedback
 
 let clips = [];
 let searchQuery = '';
+let currentView = 'all'; // 'all' | 'pinned'
 
 // DOM Element References
 let clipList = null;
 let emptyState = null;
+let emptyStatePinned = null;
 let noResultsState = null;
 let noResultsText = null;
 let btnResetSearch = null;
+let contentTitle = null;
 let contentSubtitle = null;
 let countAllClips = null;
 let countPinned = null;
 let searchInput = null;
 let searchClearBtn = null;
+let navAllClips = null;
+let navPinned = null;
 
 /**
  * Format timestamp into readable relative time
@@ -39,45 +44,113 @@ function formatTimestamp(timestamp) {
 }
 
 /**
- * Returns filtered clips based on current case-insensitive search query
+ * Sorts clips for the "All Clips" view:
+ * 1. Pinned entries first (newest to oldest)
+ * 2. Unpinned entries second (newest to oldest)
+ * @param {Array} items
  * @returns {Array}
  */
-function getFilteredClips() {
-  const query = searchQuery.trim().toLowerCase();
-  if (!query) {
-    return clips;
-  }
-  return clips.filter((clip) => {
-    const text = typeof clip.text === 'string' ? clip.text.toLowerCase() : '';
-    return text.includes(query);
+function sortClips(items) {
+  return [...items].sort((a, b) => {
+    // Pinned entries shown first
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    // Newest first within same pinned status
+    return (b.timestamp || 0) - (a.timestamp || 0);
   });
 }
 
 /**
- * Update UI counts for header and navigation badges
- * @param {number} filteredCount
+ * Returns filtered clips based on current navigation view and search query
+ * @returns {Array}
  */
-function updateCounts(filteredCount) {
+function getVisibleClips() {
+  // Step 1: Filter by sidebar view (all vs pinned)
+  let baseItems = currentView === 'pinned'
+    ? clips.filter((c) => c.pinned)
+    : clips;
+
+  // Step 2: Filter by search query if active
+  const query = searchQuery.trim().toLowerCase();
+  if (query) {
+    baseItems = baseItems.filter((clip) => {
+      const text = typeof clip.text === 'string' ? clip.text.toLowerCase() : '';
+      return text.includes(query);
+    });
+  }
+
+  // Step 3: Sort: pinned entries first in All Clips, newest first in Pinned
+  if (currentView === 'all') {
+    return sortClips(baseItems);
+  }
+  // For Pinned view, all items are pinned, sort newest first
+  return [...baseItems].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+}
+
+/**
+ * Update UI counts for header and navigation badges
+ * @param {number} visibleCount
+ */
+function updateCounts(visibleCount) {
   const total = clips.length;
-  const pinned = clips.filter((c) => c.pinned).length;
+  const pinnedTotal = clips.filter((c) => c.pinned).length;
 
   if (countAllClips) {
     countAllClips.textContent = total;
     countAllClips.setAttribute('aria-label', `${total} items`);
   }
   if (countPinned) {
-    countPinned.textContent = pinned;
-    countPinned.setAttribute('aria-label', `${pinned} pinned items`);
+    countPinned.textContent = pinnedTotal;
+    countPinned.setAttribute('aria-label', `${pinnedTotal} pinned items`);
   }
 
   if (contentSubtitle) {
     const activeQuery = searchQuery.trim();
-    if (activeQuery) {
-      contentSubtitle.textContent = `${filteredCount} of ${total} clip${total === 1 ? '' : 's'} matching`;
+    if (currentView === 'pinned') {
+      if (activeQuery) {
+        contentSubtitle.textContent = `${visibleCount} of ${pinnedTotal} pinned clip${pinnedTotal === 1 ? '' : 's'} matching`;
+      } else {
+        contentSubtitle.textContent = `${pinnedTotal} pinned clip${pinnedTotal === 1 ? '' : 's'} stored`;
+      }
     } else {
-      contentSubtitle.textContent = `${total} clip${total === 1 ? '' : 's'} stored`;
+      if (activeQuery) {
+        contentSubtitle.textContent = `${visibleCount} of ${total} clip${total === 1 ? '' : 's'} matching`;
+      } else {
+        contentSubtitle.textContent = `${total} clip${total === 1 ? '' : 's'} stored`;
+      }
     }
   }
+}
+
+/**
+ * Switches the active sidebar view between 'all' and 'pinned'
+ * @param {'all' | 'pinned'} view
+ */
+function switchView(view) {
+  if (currentView === view) return;
+  currentView = view;
+
+  // Update navigation button active states
+  if (navAllClips) {
+    const isAll = currentView === 'all';
+    navAllClips.classList.toggle('active', isAll);
+    if (isAll) navAllClips.setAttribute('aria-current', 'page');
+    else navAllClips.removeAttribute('aria-current');
+  }
+
+  if (navPinned) {
+    const isPinned = currentView === 'pinned';
+    navPinned.classList.toggle('active', isPinned);
+    if (isPinned) navPinned.setAttribute('aria-current', 'page');
+    else navPinned.removeAttribute('aria-current');
+  }
+
+  // Update section title
+  if (contentTitle) {
+    contentTitle.textContent = currentView === 'pinned' ? 'Pinned' : 'All Clips';
+  }
+
+  renderClipsView();
 }
 
 /**
@@ -110,7 +183,6 @@ async function copyClip(id, btn) {
   try {
     const res = await window.clipvault.copyEntry(id);
     if (res && res.success && btn) {
-      // Clear any pending revert timer on this button
       if (btn._copyTimeout) {
         clearTimeout(btn._copyTimeout);
       }
@@ -134,21 +206,27 @@ async function copyClip(id, btn) {
 }
 
 /**
- * Toggles the pinned state of an entry
+ * Toggles the pinned state of an entry and persists to storage
  * @param {string} id
  */
 async function togglePin(id) {
+  if (!id || typeof id !== 'string' || !id.trim()) {
+    console.warn('[ClipVault] Cannot toggle pin: missing or invalid ID');
+    return;
+  }
   if (!window.clipvault) return;
+
   const clip = clips.find((c) => c.id === id);
   if (!clip) return;
 
   const nextState = !clip.pinned;
   try {
-    await window.clipvault.updateEntry(id, { pinned: nextState });
-    clip.pinned = nextState;
-
-    // Refresh view to preserve sort & filter
-    renderClipsView();
+    const res = await window.clipvault.updateEntry(id, { pinned: nextState });
+    if (res && res.success) {
+      clip.pinned = nextState;
+      // Re-render view to preserve pinned-first sorting and update sidebar views
+      renderClipsView();
+    }
   } catch (err) {
     console.error('Failed to update pin state:', err);
   }
@@ -205,9 +283,10 @@ function createClipElement(clip) {
   const actions = document.createElement('div');
   actions.className = 'clip-actions';
 
+  // Visible, accessible Pin control
   const pinBtn = document.createElement('button');
   pinBtn.type = 'button';
-  pinBtn.className = `btn-action${clip.pinned ? ' active' : ''}`;
+  pinBtn.className = `btn-action btn-pin${clip.pinned ? ' active' : ''}`;
   pinBtn.title = clip.pinned ? 'Unpin clip' : 'Pin clip';
   pinBtn.setAttribute('aria-label', pinBtn.title);
   pinBtn.innerHTML = `
@@ -222,6 +301,7 @@ function createClipElement(clip) {
   });
   actions.appendChild(pinBtn);
 
+  // Copy button with subtle feedback
   const copyBtn = document.createElement('button');
   copyBtn.type = 'button';
   copyBtn.className = 'btn-action btn-copy';
@@ -301,35 +381,45 @@ function createClipElement(clip) {
 }
 
 /**
- * Renders the clipboard history view based on current clips and search query
+ * Renders the clipboard history view based on current clips, view tab, and search query
  */
 function renderClipsView() {
   if (!clipList) return;
   clipList.innerHTML = '';
 
   const activeQuery = searchQuery.trim();
-  const total = clips.length;
+  const totalInView = currentView === 'pinned'
+    ? clips.filter((c) => c.pinned).length
+    : clips.length;
 
-  // Case 1: Overall history is completely empty
-  if (total === 0) {
-    if (emptyState) emptyState.hidden = false;
+  // Case 1: Active view has 0 clips total
+  if (totalInView === 0) {
+    if (currentView === 'pinned') {
+      if (emptyStatePinned) emptyStatePinned.hidden = false;
+      if (emptyState) emptyState.hidden = true;
+    } else {
+      if (emptyState) emptyState.hidden = false;
+      if (emptyStatePinned) emptyStatePinned.hidden = true;
+    }
     if (noResultsState) noResultsState.hidden = true;
     clipList.hidden = true;
     updateCounts(0);
     return;
   }
 
-  // Global empty state is hidden because clips exist
+  // Base clips exist in this view, so hide view-level empty states
   if (emptyState) emptyState.hidden = true;
+  if (emptyStatePinned) emptyStatePinned.hidden = true;
 
-  const filtered = getFilteredClips();
+  const visibleClips = getVisibleClips();
 
-  // Case 2: Clips exist, but none match the search query
-  if (filtered.length === 0) {
+  // Case 2: Clips exist in this view, but none match the search query
+  if (visibleClips.length === 0) {
     if (noResultsState) {
       noResultsState.hidden = false;
       if (noResultsText) {
-        noResultsText.textContent = `No clips match "${activeQuery}". Try a different keyword.`;
+        const viewLabel = currentView === 'pinned' ? 'pinned clips' : 'clips';
+        noResultsText.textContent = `No ${viewLabel} match "${activeQuery}". Try a different keyword.`;
       }
     }
     clipList.hidden = true;
@@ -337,21 +427,21 @@ function renderClipsView() {
     return;
   }
 
-  // Case 3: Display matching clips (or all clips if no search query)
+  // Case 3: Display matching visible clips
   if (noResultsState) noResultsState.hidden = true;
   clipList.hidden = false;
 
-  for (const clip of filtered) {
+  for (const clip of visibleClips) {
     const itemEl = createClipElement(clip);
     clipList.appendChild(itemEl);
   }
 
-  updateCounts(filtered.length);
+  updateCounts(visibleClips.length);
 }
 
 /**
  * Handle a new clip captured from clipboard:new event
- * Adds to the global history list and updates the current search view
+ * Adds to global history list and updates the current view
  * @param {Object} newClip
  */
 function handleNewClip(newClip) {
@@ -363,7 +453,7 @@ function handleNewClip(newClip) {
   // Add to top of in-memory list (newest first)
   clips.unshift(newClip);
 
-  // Update view (will show new clip if it matches current search or if no search active)
+  // Update view (preserves pinned-first sorting in All Clips)
   renderClipsView();
 }
 
@@ -416,21 +506,38 @@ function setupSearchListeners() {
 }
 
 /**
+ * Set up sidebar navigation event listeners
+ */
+function setupNavigationListeners() {
+  if (navAllClips) {
+    navAllClips.addEventListener('click', () => switchView('all'));
+  }
+  if (navPinned) {
+    navPinned.addEventListener('click', () => switchView('pinned'));
+  }
+}
+
+/**
  * Initialize renderer on DOM load
  */
 async function initRenderer() {
   clipList = document.getElementById('clip-list');
   emptyState = document.getElementById('empty-state');
+  emptyStatePinned = document.getElementById('empty-state-pinned');
   noResultsState = document.getElementById('no-results-state');
   noResultsText = document.getElementById('no-results-text');
   btnResetSearch = document.getElementById('btn-reset-search');
+  contentTitle = document.getElementById('content-title');
   contentSubtitle = document.getElementById('content-subtitle');
   countAllClips = document.getElementById('count-all-clips');
   countPinned = document.getElementById('count-pinned');
   searchInput = document.getElementById('search-input');
   searchClearBtn = document.getElementById('search-clear-btn');
+  navAllClips = document.getElementById('nav-all-clips');
+  navPinned = document.getElementById('nav-pinned');
 
   setupSearchListeners();
+  setupNavigationListeners();
 
   // Load existing history from Electron main process
   if (window.clipvault) {

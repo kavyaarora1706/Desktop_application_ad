@@ -62,7 +62,7 @@
     <main class="main-content" id="main-content">
       <header class="content-header">
         <div class="header-heading-row">
-          <h1 class="content-title">All Clips</h1>
+          <h1 class="content-title" id="content-title">All Clips</h1>
           <span class="content-subtitle" id="content-subtitle">0 clips stored</span>
         </div>
 
@@ -117,6 +117,18 @@
           <h2 class="empty-state-title">No matching clips</h2>
           <p class="empty-state-text" id="no-results-text">No clips match your search query.</p>
           <button type="button" class="btn-clear-search" id="btn-reset-search">Clear search</button>
+        </div>
+
+        <!-- Pinned Empty State (No Pinned Clips Yet) -->
+        <div class="empty-state" id="empty-state-pinned" hidden>
+          <div class="empty-state-icon" aria-hidden="true" style="color: var(--pin-color);">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="17" x2="12" y2="22"></line>
+              <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.89A2 2 0 0 1 15 10.77V6a3 3 0 0 0-6 0v4.77a2 2 0 0 1-1.11 1.79l-1.78.89A2 2 0 0 0 5 15.24Z"></path>
+            </svg>
+          </div>
+          <h2 class="empty-state-title">No pinned clips</h2>
+          <p class="empty-state-text">Pin important clips from All Clips to keep them saved at the top and easy to find.</p>
         </div>
 
         <!-- Dynamic History List -->
