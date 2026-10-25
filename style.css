@@ -507,6 +507,34 @@ body {
 .btn-action.copied {
   color: var(--accent-green-light) !important;
   background-color: var(--accent-green-subtle) !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+  padding: 4px 8px;
+  gap: 5px;
+}
+
+.copy-feedback-label {
+  display: none;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent-green-light);
+  line-height: 1;
+}
+
+.btn-action.copied .copy-feedback-label {
+  display: inline-block;
+  animation: fadeIn 0.15s ease;
+}
+
+.btn-action .icon-copied {
+  display: none;
+}
+
+.btn-action.copied .icon-copied {
+  display: inline-block;
+}
+
+.btn-action.copied .icon-copy-default {
+  display: none;
 }
 
 /* Card Body */

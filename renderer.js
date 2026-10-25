@@ -100,18 +100,33 @@ function clearSearch() {
  * @param {HTMLElement} btn
  */
 async function copyClip(id, btn) {
+  // Handle missing or invalid entry IDs safely
+  if (typeof id !== 'string' || !id.trim()) {
+    console.warn('[ClipVault] Cannot copy entry: missing or invalid ID');
+    return;
+  }
   if (!window.clipvault) return;
+
   try {
     const res = await window.clipvault.copyEntry(id);
     if (res && res.success && btn) {
+      // Clear any pending revert timer on this button
+      if (btn._copyTimeout) {
+        clearTimeout(btn._copyTimeout);
+      }
+
       btn.classList.add('copied');
       btn.title = 'Copied!';
       btn.setAttribute('aria-label', 'Copied to clipboard');
-      setTimeout(() => {
+
+      btn._copyTimeout = setTimeout(() => {
         btn.classList.remove('copied');
         btn.title = 'Copy to clipboard';
         btn.setAttribute('aria-label', 'Copy to clipboard');
-      }, 1200);
+        btn._copyTimeout = null;
+      }, 1400);
+    } else if (res && !res.success) {
+      console.warn('[ClipVault] Copy failed:', res.error);
     }
   } catch (err) {
     console.error('Failed to copy clip:', err);
@@ -209,14 +224,18 @@ function createClipElement(clip) {
 
   const copyBtn = document.createElement('button');
   copyBtn.type = 'button';
-  copyBtn.className = 'btn-action';
+  copyBtn.className = 'btn-action btn-copy';
   copyBtn.title = 'Copy to clipboard';
   copyBtn.setAttribute('aria-label', 'Copy to clipboard');
   copyBtn.innerHTML = `
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <svg class="icon-copy-default" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
     </svg>
+    <svg class="icon-copied" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+    <span class="copy-feedback-label" aria-live="polite">Copied!</span>
   `;
   copyBtn.addEventListener('click', (e) => {
     e.stopPropagation();

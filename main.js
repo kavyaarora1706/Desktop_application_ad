@@ -20,7 +20,11 @@ function registerIpcHandlers() {
 
     const clips = clipboardMonitor.getClips();
     const entry = clips.find((item) => item.id === id);
-    if (entry && entry.text) {
+    if (!entry) {
+      return { success: false, error: 'Entry not found' };
+    }
+
+    if (entry.text) {
       clipboardMonitor.setLastText(entry.text);
       clipboard.writeText(entry.text);
     }
