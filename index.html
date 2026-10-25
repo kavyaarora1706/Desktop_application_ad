@@ -56,6 +56,13 @@
           </li>
         </ul>
       </nav>
+
+      <div class="sidebar-footer">
+        <button type="button" class="btn-sidebar-monitor" id="btn-sidebar-monitor" title="Toggle clipboard monitoring">
+          <span class="monitor-dot active" id="monitor-dot" aria-hidden="true"></span>
+          <span class="monitor-label" id="monitor-label">Monitoring Active</span>
+        </button>
+      </div>
     </aside>
 
     <!-- Main Content Area -->
@@ -175,6 +182,97 @@
 
         <!-- Dynamic History List -->
         <ul class="clip-list" id="clip-list" role="list"></ul>
+      </section>
+
+      <!-- Settings Section -->
+      <section class="settings-view" id="settings-view" aria-label="Application settings" hidden>
+        <div class="settings-container">
+          <!-- Privacy Advisory Card -->
+          <div class="settings-card privacy-card">
+            <div class="settings-card-header">
+              <div class="privacy-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                  <circle cx="12" cy="11" r="3"></circle>
+                  <line x1="12" y1="14" x2="12.01" y2="14"></line>
+                </svg>
+              </div>
+              <div class="settings-card-titles">
+                <h2 class="settings-card-title">Privacy & Sensitive Data Notice</h2>
+                <span class="settings-card-badge">Local Only</span>
+              </div>
+            </div>
+            <p class="privacy-desc">
+              Your clipboard history may frequently contain sensitive information, including <strong>passwords, security tokens, API keys, private messages, and personal credentials</strong>.
+            </p>
+            <p class="privacy-note">
+              ClipVault stores all history strictly on your local computer in Electron's secure user storage. No data is ever transmitted across the internet, shared, or sent to external servers. You can pause monitoring anytime or clear your history below.
+            </p>
+          </div>
+
+          <!-- Monitoring Setting Card -->
+          <div class="settings-card">
+            <div class="settings-row">
+              <div class="settings-info">
+                <h3 class="settings-title">Clipboard Monitoring</h3>
+                <p class="settings-desc">Pause monitoring to temporarily stop capturing text, links, and code from other applications. When paused, newly copied items will not be captured or stored.</p>
+              </div>
+              <button type="button" class="btn-toggle-switch active" id="btn-toggle-monitoring" role="switch" aria-checked="true" aria-label="Toggle clipboard monitoring">
+                <span class="switch-handle"></span>
+              </button>
+            </div>
+          </div>
+
+          <!-- History Limit Setting Card -->
+          <div class="settings-card">
+            <div class="settings-row">
+              <div class="settings-info">
+                <h3 class="settings-title">History Storage Limit</h3>
+                <p class="settings-desc">Maximum number of unpinned entries to retain in persistent local storage. Pinned entries are always preserved regardless of this limit.</p>
+              </div>
+              <div class="settings-control">
+                <select id="select-history-limit" class="settings-select" aria-label="Select history limit">
+                  <option value="50">50 clips</option>
+                  <option value="100">100 clips</option>
+                  <option value="200" selected>200 clips (Default)</option>
+                  <option value="500">500 clips</option>
+                  <option value="1000">1000 clips</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Clear History Option Card -->
+          <div class="settings-card">
+            <div class="settings-row">
+              <div class="settings-info">
+                <h3 class="settings-title">Clear Clipboard History</h3>
+                <p class="settings-desc">Remove stored entries from disk and memory. You will be prompted with an option to retain your pinned clips.</p>
+              </div>
+              <div class="settings-control">
+                <button type="button" class="btn-settings-danger" id="btn-settings-clear">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                  <span>Clear History...</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- About & Storage Card -->
+          <div class="settings-card">
+            <div class="settings-info">
+              <h3 class="settings-title">About ClipVault</h3>
+              <p class="settings-desc">ClipVault v1.0.0 — Modern dark desktop clipboard manager for macOS.</p>
+              <div class="settings-meta-row">
+                <span class="settings-meta-item">Storage: <code class="settings-code">history.json</code> in Electron userData</span>
+                <span class="settings-meta-item" id="settings-storage-stats">0 clips stored</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
     </main>
   </div>

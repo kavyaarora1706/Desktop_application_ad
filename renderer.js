@@ -3,8 +3,13 @@
 
 let clips = [];
 let searchQuery = '';
-let currentView = 'all'; // 'all' | 'pinned'
+let currentView = 'all'; // 'all' | 'pinned' | 'settings'
 let currentCategory = 'all'; // 'all' | 'link' | 'code' | 'text'
+let isMonitoring = true;
+let userSettings = {
+  historyLimit: 200,
+  monitoringEnabled: true
+};
 
 // DOM Element References
 let clipList = null;
@@ -21,6 +26,7 @@ let searchInput = null;
 let searchClearBtn = null;
 let navAllClips = null;
 let navPinned = null;
+let navSettings = null;
 let btnClearHistory = null;
 let clearConfirmModal = null;
 let btnCancelClear = null;
@@ -33,6 +39,19 @@ let countCatAll = null;
 let countCatLink = null;
 let countCatCode = null;
 let countCatText = null;
+
+// Settings & Privacy Elements
+let btnSidebarMonitor = null;
+let monitorDot = null;
+let monitorLabel = null;
+let settingsView = null;
+let btnToggleMonitoring = null;
+let selectHistoryLimit = null;
+let btnSettingsClear = null;
+let settingsStorageStats = null;
+let searchContainer = null;
+let categoryFiltersContainer = null;
+let clipboardHistorySection = null;
 
 /**
  * Format timestamp into readable relative time
@@ -190,8 +209,8 @@ function switchCategory(category) {
 }
 
 /**
- * Switches the active sidebar view between 'all' and 'pinned'
- * @param {'all' | 'pinned'} view
+ * Switches the active sidebar view between 'all', 'pinned', and 'settings'
+ * @param {'all' | 'pinned' | 'settings'} view
  */
 function switchView(view) {
   if (currentView === view) return;
@@ -211,6 +230,33 @@ function switchView(view) {
     if (isPinned) navPinned.setAttribute('aria-current', 'page');
     else navPinned.removeAttribute('aria-current');
   }
+
+  if (navSettings) {
+    const isSettings = currentView === 'settings';
+    navSettings.classList.toggle('active', isSettings);
+    if (isSettings) navSettings.setAttribute('aria-current', 'page');
+    else navSettings.removeAttribute('aria-current');
+  }
+
+  // Handle Settings view visibility
+  if (currentView === 'settings') {
+    if (contentTitle) contentTitle.textContent = 'Settings';
+    if (contentSubtitle) contentSubtitle.textContent = 'Preferences & privacy controls';
+    if (searchContainer) searchContainer.hidden = true;
+    if (categoryFiltersContainer) categoryFiltersContainer.hidden = true;
+    if (btnClearHistory) btnClearHistory.hidden = true;
+    if (clipboardHistorySection) clipboardHistorySection.hidden = true;
+    if (settingsView) settingsView.hidden = false;
+    updateSettingsStats();
+    return;
+  }
+
+  // Restore history view for 'all' and 'pinned'
+  if (searchContainer) searchContainer.hidden = false;
+  if (categoryFiltersContainer) categoryFiltersContainer.hidden = false;
+  if (btnClearHistory) btnClearHistory.hidden = false;
+  if (clipboardHistorySection) clipboardHistorySection.hidden = false;
+  if (settingsView) settingsView.hidden = true;
 
   // Update section title
   if (contentTitle) {
@@ -651,6 +697,103 @@ function setupNavigationListeners() {
   if (navPinned) {
     navPinned.addEventListener('click', () => switchView('pinned'));
   }
+  if (navSettings) {
+    navSettings.addEventListener('click', () => switchView('settings'));
+  }
+}
+
+/**
+ * Updates UI monitoring indicators across sidebar and settings
+ * @param {boolean} active
+ */
+function updateMonitoringUI(active) {
+  isMonitoring = Boolean(active);
+
+  if (monitorDot) {
+    monitorDot.classList.toggle('active', isMonitoring);
+  }
+  if (monitorLabel) {
+    monitorLabel.textContent = isMonitoring ? 'Monitoring Active' : 'Monitoring Paused';
+  }
+  if (btnSidebarMonitor) {
+    btnSidebarMonitor.title = isMonitoring
+      ? 'Monitoring active — click to pause'
+      : 'Monitoring paused — click to resume';
+  }
+
+  if (btnToggleMonitoring) {
+    btnToggleMonitoring.classList.toggle('active', isMonitoring);
+    btnToggleMonitoring.setAttribute('aria-checked', String(isMonitoring));
+  }
+}
+
+/**
+ * Toggles clipboard monitoring on/off
+ */
+async function toggleMonitoring() {
+  if (!window.clipvault) return;
+  const nextState = !isMonitoring;
+  try {
+    const res = await window.clipvault.setMonitoring(nextState);
+    const active = res && typeof res.isMonitoring === 'boolean' ? res.isMonitoring : nextState;
+    userSettings.monitoringEnabled = active;
+    updateMonitoringUI(active);
+  } catch (err) {
+    console.error('Failed to toggle monitoring:', err);
+  }
+}
+
+/**
+ * Updates stats in Settings view
+ */
+function updateSettingsStats() {
+  if (settingsStorageStats) {
+    const total = clips.length;
+    const pinnedTotal = clips.filter((c) => c.pinned).length;
+    settingsStorageStats.textContent = `${total} clip${total === 1 ? '' : 's'} stored (${pinnedTotal} pinned)`;
+  }
+}
+
+/**
+ * Set up settings and privacy listeners
+ */
+function setupSettingsListeners() {
+  if (btnSidebarMonitor) {
+    btnSidebarMonitor.addEventListener('click', toggleMonitoring);
+  }
+  if (btnToggleMonitoring) {
+    btnToggleMonitoring.addEventListener('click', toggleMonitoring);
+  }
+
+  if (selectHistoryLimit) {
+    selectHistoryLimit.addEventListener('change', async (e) => {
+      const val = parseInt(e.target.value, 10);
+      if (!isNaN(val) && val >= 10 && window.clipvault) {
+        userSettings.historyLimit = val;
+        try {
+          await window.clipvault.saveSettings(userSettings);
+          // Reload history after prune
+          const updatedHistory = await window.clipvault.getHistory();
+          if (Array.isArray(updatedHistory)) {
+            clips = updatedHistory.map((item) => {
+              if (!item.type || !['link', 'code', 'text'].includes(item.type)) {
+                item.type = 'text';
+              }
+              return item;
+            }).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            updateCounts(clips.length);
+            updateSettingsStats();
+          }
+        } catch (err) {
+          console.error('Failed to save history limit:', err);
+        }
+      }
+    });
+  }
+
+  if (btnSettingsClear) {
+    btnSettingsClear.addEventListener('click', openClearModal);
+  }
 }
 
 /**
@@ -762,6 +905,7 @@ async function initRenderer() {
   searchClearBtn = document.getElementById('search-clear-btn');
   navAllClips = document.getElementById('nav-all-clips');
   navPinned = document.getElementById('nav-pinned');
+  navSettings = document.getElementById('nav-settings');
   btnClearHistory = document.getElementById('btn-clear-history');
   clearConfirmModal = document.getElementById('clear-confirm-modal');
   btnCancelClear = document.getElementById('btn-cancel-clear');
@@ -775,14 +919,47 @@ async function initRenderer() {
   countCatCode = document.getElementById('count-cat-code');
   countCatText = document.getElementById('count-cat-text');
 
+  btnSidebarMonitor = document.getElementById('btn-sidebar-monitor');
+  monitorDot = document.getElementById('monitor-dot');
+  monitorLabel = document.getElementById('monitor-label');
+  settingsView = document.getElementById('settings-view');
+  btnToggleMonitoring = document.getElementById('btn-toggle-monitoring');
+  selectHistoryLimit = document.getElementById('select-history-limit');
+  btnSettingsClear = document.getElementById('btn-settings-clear');
+  settingsStorageStats = document.getElementById('settings-storage-stats');
+  searchContainer = document.querySelector('.search-container');
+  categoryFiltersContainer = document.querySelector('.category-filters');
+  clipboardHistorySection = document.querySelector('.clipboard-history');
+
   setupSearchListeners();
   setupNavigationListeners();
   setupCategoryListeners();
   setupClearHistoryListeners();
+  setupSettingsListeners();
 
-  // Load existing history from Electron main process
+  // Load existing history and settings from Electron main process
   if (window.clipvault) {
     try {
+      // Load saved settings
+      if (typeof window.clipvault.getSettings === 'function') {
+        const loadedSettings = await window.clipvault.getSettings();
+        if (loadedSettings) {
+          userSettings = Object.assign(userSettings, loadedSettings);
+          if (selectHistoryLimit && userSettings.historyLimit) {
+            selectHistoryLimit.value = String(userSettings.historyLimit);
+          }
+          updateMonitoringUI(userSettings.monitoringEnabled !== false);
+        }
+      }
+
+      // Check current monitoring status
+      if (typeof window.clipvault.getMonitoringStatus === 'function') {
+        const status = await window.clipvault.getMonitoringStatus();
+        if (status && typeof status.isMonitoring === 'boolean') {
+          updateMonitoringUI(status.isMonitoring);
+        }
+      }
+
       const fetched = await window.clipvault.getHistory();
       clips = Array.isArray(fetched)
         ? fetched.map((item) => {
@@ -804,6 +981,11 @@ async function initRenderer() {
       window.clipvault.onNewClip(handleNewClip);
     } else if (typeof window.clipvault.onClipboardNew === 'function') {
       window.clipvault.onClipboardNew(handleNewClip);
+    }
+
+    // Subscribe to real-time monitoring state changes
+    if (typeof window.clipvault.onMonitoringChanged === 'function') {
+      window.clipvault.onMonitoringChanged(updateMonitoringUI);
     }
   } else {
     renderClipsView();

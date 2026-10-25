@@ -199,6 +199,7 @@ class ClipboardMonitor extends EventEmitter {
     this.pollTimer = setInterval(() => {
       this.checkClipboard();
     }, this.pollIntervalMs);
+    this.emit('monitoring-changed', true);
   }
 
   /**
@@ -211,6 +212,21 @@ class ClipboardMonitor extends EventEmitter {
       clearInterval(this.pollTimer);
       this.pollTimer = null;
     }
+    this.emit('monitoring-changed', false);
+  }
+
+  /**
+   * Set monitoring state (pause / resume)
+   * @param {boolean} enabled
+   * @returns {Promise<boolean>}
+   */
+  async setMonitoring(enabled) {
+    if (enabled) {
+      await this.start();
+    } else {
+      this.stop();
+    }
+    return this.isMonitoring;
   }
 
   /**

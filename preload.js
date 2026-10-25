@@ -22,7 +22,19 @@ const clipvaultApi = {
   startMonitoring: () => ipcRenderer.invoke('clipvault:start-monitoring'),
   stopMonitoring: () => ipcRenderer.invoke('clipvault:stop-monitoring'),
   getMonitoringStatus: () => ipcRenderer.invoke('clipvault:get-monitoring-status'),
-  setMonitoring: (enabled) => ipcRenderer.invoke(enabled ? 'clipvault:start-monitoring' : 'clipvault:stop-monitoring'),
+  setMonitoring: (enabled) => ipcRenderer.invoke('clipvault:set-monitoring', enabled),
+
+  // Settings management
+  getSettings: () => ipcRenderer.invoke('clipvault:get-settings'),
+  saveSettings: (settings) => ipcRenderer.invoke('clipvault:save-settings', settings),
+
+  // Subscription to monitoring state changes
+  onMonitoringChanged: (callback) => {
+    if (typeof callback !== 'function') return () => {};
+    const subscription = (_event, isMonitoring) => callback(isMonitoring);
+    ipcRenderer.on('clipvault:monitoring-changed', subscription);
+    return () => ipcRenderer.removeListener('clipvault:monitoring-changed', subscription);
+  },
 
   // Controlled subscription to clipboard:new event
   onNewClip: (callback) => {

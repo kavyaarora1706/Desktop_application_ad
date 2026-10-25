@@ -69,25 +69,67 @@ function registerIpcHandlers() {
   // Controlling monitoring
   ipcMain.handle('clipvault:start-monitoring', async () => {
     await clipboardMonitor.start();
+    const settings = await storage.loadSettings();
+    settings.monitoringEnabled = true;
+    await storage.saveSettings(settings);
     return { success: true, isMonitoring: true };
   });
 
   ipcMain.handle('clipvault:stop-monitoring', async () => {
     clipboardMonitor.stop();
+    const settings = await storage.loadSettings();
+    settings.monitoringEnabled = false;
+    await storage.saveSettings(settings);
     return { success: true, isMonitoring: false };
+  });
+
+  ipcMain.handle('clipvault:set-monitoring', async (_event, enabled) => {
+    const isMonitoring = await clipboardMonitor.setMonitoring(Boolean(enabled));
+    const settings = await storage.loadSettings();
+    settings.monitoringEnabled = isMonitoring;
+    await storage.saveSettings(settings);
+    return { success: true, isMonitoring };
   });
 
   ipcMain.handle('clipvault:get-monitoring-status', async () => {
     return { isMonitoring: clipboardMonitor.isMonitoring };
   });
+
+  // Settings management
+  ipcMain.handle('clipvault:get-settings', async () => {
+    return storage.loadSettings();
+  });
+
+  ipcMain.handle('clipvault:save-settings', async (_event, newSettings) => {
+    if (!newSettings || typeof newSettings !== 'object' || Array.isArray(newSettings)) {
+      return { success: false, error: 'Invalid argument: settings must be an object' };
+    }
+
+    const current = await storage.loadSettings();
+    if (typeof newSettings.historyLimit === 'number' && newSettings.historyLimit >= 10 && newSettings.historyLimit <= 2000) {
+      current.historyLimit = newSettings.historyLimit;
+      storage.setHistoryLimit(current.historyLimit);
+      // Re-prune history if limit decreased
+      clipboardMonitor.clips = storage.pruneHistory(clipboardMonitor.clips);
+      await storage.saveHistory(clipboardMonitor.clips);
+    }
+
+    if (typeof newSettings.monitoringEnabled === 'boolean') {
+      current.monitoringEnabled = newSettings.monitoringEnabled;
+      await clipboardMonitor.setMonitoring(current.monitoringEnabled);
+    }
+
+    await storage.saveSettings(current);
+    return { success: true, settings: current };
+  });
 }
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 800,
-    height: 560,
-    minWidth: 620,
-    minHeight: 420,
+    width: 820,
+    height: 580,
+    minWidth: 640,
+    minHeight: 440,
     title: 'ClipVault',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -105,6 +147,9 @@ function createWindow() {
 
 // App lifecycle
 app.whenReady().then(async () => {
+  // Load saved settings on startup
+  const savedSettings = await storage.loadSettings();
+
   // Load saved history on startup from Electron's userData directory
   const savedHistory = await storage.loadHistory();
 
@@ -118,8 +163,19 @@ app.whenReady().then(async () => {
     }
   });
 
-  // Start clipboard polling (~1000ms)
-  await clipboardMonitor.start();
+  // Forward monitoring status changes to renderer
+  clipboardMonitor.on('monitoring-changed', (isMonitoring) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('clipvault:monitoring-changed', isMonitoring);
+    }
+  });
+
+  // Start clipboard polling if enabled in settings
+  if (savedSettings.monitoringEnabled !== false) {
+    await clipboardMonitor.start();
+  } else {
+    clipboardMonitor.stop();
+  }
 
   registerIpcHandlers();
   createWindow();

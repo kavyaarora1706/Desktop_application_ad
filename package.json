@@ -1,17 +1,44 @@
 {
   "name": "clipvault",
+  "productName": "ClipVault",
   "version": "1.0.0",
   "description": "Smart clipboard history manager for macOS",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "dist": "CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac dmg"
+  },
+  "build": {
+    "appId": "com.clipvault.app",
+    "productName": "ClipVault",
+    "mac": {
+      "category": "public.app-category.utilities",
+      "target": ["dmg"],
+      "identity": null
+    },
+    "dmg": {
+      "title": "ClipVault",
+      "format": "ULFO"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer.js",
+      "index.html",
+      "style.css",
+      "src/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    }
   },
   "keywords": [
     "clipboard",
     "macos",
     "electron"
   ],
-  "author": "",
+  "author": "ClipVault",
   "license": "ISC",
   "devDependencies": {
     "electron": "^45.0.0",

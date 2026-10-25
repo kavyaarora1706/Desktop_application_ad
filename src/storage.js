@@ -5,6 +5,28 @@ const path = require('path');
 
 const MAX_UNPINNED_ENTRIES = 200;
 const STORAGE_FILENAME = 'history.json';
+const SETTINGS_FILENAME = 'settings.json';
+
+let currentHistoryLimit = MAX_UNPINNED_ENTRIES;
+
+/**
+ * Returns current unpinned history limit
+ * @returns {number}
+ */
+function getHistoryLimit() {
+  return currentHistoryLimit;
+}
+
+/**
+ * Updates current unpinned history limit (clamped between 10 and 2000)
+ * @param {number} limit
+ */
+function setHistoryLimit(limit) {
+  const num = parseInt(limit, 10);
+  if (!isNaN(num) && num >= 10 && num <= 2000) {
+    currentHistoryLimit = num;
+  }
+}
 
 /**
  * Resolves the directory path for persistent data.
@@ -44,7 +66,7 @@ function getStorageFilePath() {
  * @param {number} maxUnpinned
  * @returns {Array}
  */
-function pruneHistory(entries, maxUnpinned = MAX_UNPINNED_ENTRIES) {
+function pruneHistory(entries, maxUnpinned = currentHistoryLimit) {
   if (!Array.isArray(entries)) return [];
 
   const pinned = [];
@@ -151,6 +173,84 @@ async function saveHistory(entries) {
 }
 
 /**
+ * Returns the absolute path to settings.json in userData
+ * @returns {string}
+ */
+function getSettingsFilePath() {
+  return path.join(getStorageDirectory(), SETTINGS_FILENAME);
+}
+
+/**
+ * Loads saved settings from settings.json or returns default settings
+ * @returns {Promise<Object>}
+ */
+async function loadSettings() {
+  const filePath = getSettingsFilePath();
+  const defaultSettings = {
+    historyLimit: MAX_UNPINNED_ENTRIES,
+    monitoringEnabled: true
+  };
+
+  try {
+    if (!fs.existsSync(filePath)) {
+      return defaultSettings;
+    }
+
+    const data = await fs.promises.readFile(filePath, 'utf8');
+    if (!data || !data.trim()) {
+      return defaultSettings;
+    }
+
+    const parsed = JSON.parse(data);
+    const settings = {
+      historyLimit: typeof parsed.historyLimit === 'number' && parsed.historyLimit >= 10 ? parsed.historyLimit : defaultSettings.historyLimit,
+      monitoringEnabled: typeof parsed.monitoringEnabled === 'boolean' ? parsed.monitoringEnabled : defaultSettings.monitoringEnabled
+    };
+
+    setHistoryLimit(settings.historyLimit);
+    return settings;
+  } catch (err) {
+    console.error('[Storage] Error loading settings:', err.name || 'SettingsReadError');
+    return defaultSettings;
+  }
+}
+
+/**
+ * Saves settings to settings.json using atomic file replacement
+ * @param {Object} settings
+ * @returns {Promise<boolean>}
+ */
+async function saveSettings(settings) {
+  const dir = getStorageDirectory();
+  const targetPath = getSettingsFilePath();
+  const tempPath = path.join(
+    dir,
+    `.${SETTINGS_FILENAME}.tmp.${Date.now()}.${Math.random().toString(36).slice(2, 8)}`
+  );
+
+  try {
+    await fs.promises.mkdir(dir, { recursive: true });
+
+    if (settings && typeof settings.historyLimit === 'number') {
+      setHistoryLimit(settings.historyLimit);
+    }
+
+    const jsonString = JSON.stringify(settings, null, 2);
+    await fs.promises.writeFile(tempPath, jsonString, 'utf8');
+    await fs.promises.rename(tempPath, targetPath);
+    return true;
+  } catch (err) {
+    console.error('[Storage] Error saving settings:', err.name || 'SettingsWriteError');
+    try {
+      if (fs.existsSync(tempPath)) {
+        await fs.promises.unlink(tempPath);
+      }
+    } catch {}
+    return false;
+  }
+}
+
+/**
  * Clears persistent history file
  * @returns {Promise<boolean>}
  */
@@ -174,5 +274,10 @@ module.exports = {
   clearStorage,
   getStorageFilePath,
   getStorageDirectory,
-  MAX_UNPINNED_ENTRIES
+  MAX_UNPINNED_ENTRIES,
+  getHistoryLimit,
+  setHistoryLimit,
+  loadSettings,
+  saveSettings,
+  getSettingsFilePath
 };
