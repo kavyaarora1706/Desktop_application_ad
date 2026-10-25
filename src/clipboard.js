@@ -201,10 +201,15 @@ class ClipboardMonitor extends EventEmitter {
 
   /**
    * Clear in-memory history and persistent storage
+   * @param {boolean} keepPinned When true, preserves pinned entries
    */
-  async clearClips() {
-    this.clips.length = 0;
-    await storage.saveHistory([]);
+  async clearClips(keepPinned = false) {
+    if (keepPinned) {
+      this.clips = this.clips.filter((c) => c.pinned);
+    } else {
+      this.clips.length = 0;
+    }
+    await storage.saveHistory(this.clips);
   }
 }
 

@@ -15,8 +15,8 @@ const clipvaultApi = {
   // Deleting an entry
   deleteEntry: (id) => ipcRenderer.invoke('clipvault:delete-entry', id),
 
-  // Clearing all history
-  clearHistory: () => ipcRenderer.invoke('clipvault:clear-history'),
+  // Clearing history (supports optional { keepPinned: boolean })
+  clearHistory: (options) => ipcRenderer.invoke('clipvault:clear-history', options),
 
   // Controlling clipboard monitoring
   startMonitoring: () => ipcRenderer.invoke('clipvault:start-monitoring'),

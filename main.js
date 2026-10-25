@@ -59,10 +59,11 @@ function registerIpcHandlers() {
     return { success: deleted, id };
   });
 
-  // Clearing history
-  ipcMain.handle('clipvault:clear-history', async () => {
-    await clipboardMonitor.clearClips();
-    return { success: true };
+  // Clearing history (supports retaining pinned entries)
+  ipcMain.handle('clipvault:clear-history', async (_event, options = {}) => {
+    const keepPinned = options && typeof options === 'object' && options.keepPinned === true;
+    await clipboardMonitor.clearClips(keepPinned);
+    return { success: true, keepPinned };
   });
 
   // Controlling monitoring

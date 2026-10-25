@@ -20,6 +20,13 @@ let searchInput = null;
 let searchClearBtn = null;
 let navAllClips = null;
 let navPinned = null;
+let btnClearHistory = null;
+let clearConfirmModal = null;
+let btnCancelClear = null;
+let btnConfirmClear = null;
+let checkKeepPinned = null;
+let modalPinnedCount = null;
+let modalPinnedOption = null;
 
 /**
  * Format timestamp into readable relative time
@@ -102,6 +109,10 @@ function updateCounts(visibleCount) {
   if (countPinned) {
     countPinned.textContent = pinnedTotal;
     countPinned.setAttribute('aria-label', `${pinnedTotal} pinned items`);
+  }
+
+  if (btnClearHistory) {
+    btnClearHistory.disabled = total === 0;
   }
 
   if (contentSubtitle) {
@@ -233,6 +244,33 @@ async function togglePin(id) {
 }
 
 /**
+ * Deletes an individual clipboard entry by ID and updates UI and storage immediately
+ * @param {string} id
+ */
+async function deleteClip(id) {
+  if (typeof id !== 'string' || !id.trim()) {
+    console.warn('[ClipVault] Cannot delete clip: missing or invalid ID');
+    return;
+  }
+  if (!window.clipvault) return;
+
+  try {
+    const res = await window.clipvault.deleteEntry(id);
+    if (res && res.success) {
+      const index = clips.findIndex((c) => c.id === id);
+      if (index !== -1) {
+        clips.splice(index, 1);
+        renderClipsView();
+      }
+    } else {
+      console.warn('[ClipVault] Delete failed:', res ? res.error : 'Unknown error');
+    }
+  } catch (err) {
+    console.error('Failed to delete clip:', err);
+  }
+}
+
+/**
  * Builds a DOM element for a clip item safely using textContent
  * @param {Object} clip
  * @returns {HTMLLIElement}
@@ -322,6 +360,24 @@ function createClipElement(clip) {
     copyClip(clip.id, copyBtn);
   });
   actions.appendChild(copyBtn);
+
+  // Delete button operating directly on entry ID
+  const deleteBtn = document.createElement('button');
+  deleteBtn.type = 'button';
+  deleteBtn.className = 'btn-action btn-delete';
+  deleteBtn.title = 'Delete clip';
+  deleteBtn.setAttribute('aria-label', 'Delete clip');
+  deleteBtn.innerHTML = `
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="3 6 5 6 21 6"></polyline>
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+    </svg>
+  `;
+  deleteBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    deleteClip(clip.id);
+  });
+  actions.appendChild(deleteBtn);
 
   header.appendChild(meta);
   header.appendChild(actions);
@@ -518,6 +574,97 @@ function setupNavigationListeners() {
 }
 
 /**
+ * Opens clear history confirmation modal
+ */
+function openClearModal() {
+  if (clips.length === 0) return;
+
+  const pinnedCount = clips.filter((c) => c.pinned).length;
+  if (modalPinnedCount) {
+    modalPinnedCount.textContent = pinnedCount;
+  }
+  if (modalPinnedOption) {
+    modalPinnedOption.style.display = pinnedCount > 0 ? 'block' : 'none';
+  }
+  if (checkKeepPinned) {
+    checkKeepPinned.checked = pinnedCount > 0;
+    checkKeepPinned.disabled = pinnedCount === 0;
+  }
+
+  if (clearConfirmModal) {
+    clearConfirmModal.hidden = false;
+  }
+  if (btnCancelClear) {
+    btnCancelClear.focus();
+  }
+}
+
+/**
+ * Closes clear history confirmation modal
+ */
+function closeClearModal() {
+  if (clearConfirmModal) {
+    clearConfirmModal.hidden = true;
+  }
+  if (btnClearHistory) {
+    btnClearHistory.focus();
+  }
+}
+
+/**
+ * Handles confirmed clear history action
+ */
+async function handleConfirmClear() {
+  if (!window.clipvault) return;
+
+  const keepPinned = Boolean(checkKeepPinned && checkKeepPinned.checked && !checkKeepPinned.disabled);
+
+  try {
+    const res = await window.clipvault.clearHistory({ keepPinned });
+    if (res && res.success) {
+      if (keepPinned) {
+        clips = clips.filter((c) => c.pinned);
+      } else {
+        clips = [];
+      }
+      closeClearModal();
+      renderClipsView();
+    } else {
+      console.warn('[ClipVault] Clear history failed:', res ? res.error : 'Unknown error');
+    }
+  } catch (err) {
+    console.error('Failed to clear history:', err);
+  }
+}
+
+/**
+ * Set up clear history event listeners
+ */
+function setupClearHistoryListeners() {
+  if (btnClearHistory) {
+    btnClearHistory.addEventListener('click', openClearModal);
+  }
+  if (btnCancelClear) {
+    btnCancelClear.addEventListener('click', closeClearModal);
+  }
+  if (btnConfirmClear) {
+    btnConfirmClear.addEventListener('click', handleConfirmClear);
+  }
+  if (clearConfirmModal) {
+    clearConfirmModal.addEventListener('click', (e) => {
+      if (e.target === clearConfirmModal) {
+        closeClearModal();
+      }
+    });
+  }
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && clearConfirmModal && !clearConfirmModal.hidden) {
+      closeClearModal();
+    }
+  });
+}
+
+/**
  * Initialize renderer on DOM load
  */
 async function initRenderer() {
@@ -535,9 +682,17 @@ async function initRenderer() {
   searchClearBtn = document.getElementById('search-clear-btn');
   navAllClips = document.getElementById('nav-all-clips');
   navPinned = document.getElementById('nav-pinned');
+  btnClearHistory = document.getElementById('btn-clear-history');
+  clearConfirmModal = document.getElementById('clear-confirm-modal');
+  btnCancelClear = document.getElementById('btn-cancel-clear');
+  btnConfirmClear = document.getElementById('btn-confirm-clear');
+  checkKeepPinned = document.getElementById('check-keep-pinned');
+  modalPinnedCount = document.getElementById('modal-pinned-count');
+  modalPinnedOption = document.getElementById('modal-pinned-option');
 
   setupSearchListeners();
   setupNavigationListeners();
+  setupClearHistoryListeners();
 
   // Load existing history from Electron main process
   if (window.clipvault) {

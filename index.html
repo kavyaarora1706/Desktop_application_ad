@@ -62,8 +62,17 @@
     <main class="main-content" id="main-content">
       <header class="content-header">
         <div class="header-heading-row">
-          <h1 class="content-title" id="content-title">All Clips</h1>
-          <span class="content-subtitle" id="content-subtitle">0 clips stored</span>
+          <div class="header-title-group">
+            <h1 class="content-title" id="content-title">All Clips</h1>
+            <span class="content-subtitle" id="content-subtitle">0 clips stored</span>
+          </div>
+          <button type="button" class="btn-clear-history" id="btn-clear-history" title="Clear clipboard history" aria-label="Clear clipboard history">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            <span>Clear History</span>
+          </button>
         </div>
 
         <div class="search-container">
@@ -136,6 +145,36 @@
       </section>
     </main>
   </div>
+
+  <!-- Clear History Confirmation Modal -->
+  <div class="modal-backdrop" id="clear-confirm-modal" role="presentation" hidden>
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-desc">
+      <div class="modal-header">
+        <div class="modal-icon-danger" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </div>
+        <h2 class="modal-title" id="modal-title">Clear Clipboard History</h2>
+      </div>
+      <p class="modal-desc" id="modal-desc">
+        Are you sure you want to clear your clipboard history? This action cannot be undone.
+      </p>
+      <div class="modal-option" id="modal-pinned-option">
+        <label class="modal-checkbox-label" for="check-keep-pinned">
+          <input type="checkbox" id="check-keep-pinned" class="modal-checkbox" checked />
+          <span class="modal-checkbox-text">Retain pinned entries (<span id="modal-pinned-count">0</span>)</span>
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-modal btn-modal-cancel" id="btn-cancel-clear">Cancel</button>
+        <button type="button" class="btn-modal btn-modal-danger" id="btn-confirm-clear">Clear History</button>
+      </div>
+    </div>
+  </div>
+
   <script src="renderer.js"></script>
 </body>
 </html>
