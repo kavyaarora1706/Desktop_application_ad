@@ -1,6 +1,7 @@
 // src/clipboard.js - Text Clipboard Monitoring Module
 const { clipboard } = require('electron');
 const EventEmitter = require('events');
+const storage = require('./storage.js');
 
 class ClipboardMonitor extends EventEmitter {
   constructor() {
@@ -53,9 +54,9 @@ class ClipboardMonitor extends EventEmitter {
   }
 
   /**
-   * Initializes the monitor and sets previous clipboard value
+   * Initializes the monitor with saved history and sets previous clipboard value
    * so existing clipboard content is not unexpectedly captured at startup.
-   * @param {Array} initialClips Optional initial in-memory items
+   * @param {Array} initialClips Saved history loaded from storage
    */
   async init(initialClips = []) {
     try {
@@ -63,7 +64,8 @@ class ClipboardMonitor extends EventEmitter {
     } catch {
       this.lastText = '';
     }
-    this.clips = [...initialClips];
+    // Prune loaded clips to ensure 200 unpinned limit and pinned preservation
+    this.clips = storage.pruneHistory(initialClips);
   }
 
   /**
@@ -98,7 +100,7 @@ class ClipboardMonitor extends EventEmitter {
   }
 
   /**
-   * Poll check: read clipboard, detect new non-empty text, emit event, and update memory
+   * Poll check: read clipboard, detect new non-empty text, emit event, and persist
    */
   async checkClipboard() {
     if (!this.isMonitoring) return;
@@ -139,10 +141,16 @@ class ClipboardMonitor extends EventEmitter {
       // Keep in memory (prepended as most recent)
       this.clips.unshift(clipItem);
 
+      // Enforce 200 ordinary history limit, preserving pinned
+      this.clips = storage.pruneHistory(this.clips);
+
+      // Persist to history.json
+      await storage.saveHistory(this.clips);
+
       // Emit new clip event
       this.emit('new-clip', clipItem);
     } catch (err) {
-      console.error('Clipboard check error:', err);
+      console.error('[Clipboard] Error checking clipboard:', err.name || 'CheckError');
     }
   }
 
@@ -162,34 +170,41 @@ class ClipboardMonitor extends EventEmitter {
   }
 
   /**
-   * Delete an in-memory clip
+   * Delete an in-memory clip and update persistent storage
+   * @param {string} id
    */
-  deleteClip(id) {
+  async deleteClip(id) {
     const index = this.clips.findIndex((c) => c.id === id);
     if (index !== -1) {
       this.clips.splice(index, 1);
+      await storage.saveHistory(this.clips);
       return true;
     }
     return false;
   }
 
   /**
-   * Update an in-memory clip
+   * Update an in-memory clip (e.g. pinned state) and update persistent storage
+   * @param {string} id
+   * @param {Object} updates
    */
-  updateClip(id, updates) {
+  async updateClip(id, updates) {
     const clip = this.clips.find((c) => c.id === id);
     if (clip) {
       Object.assign(clip, updates);
+      this.clips = storage.pruneHistory(this.clips);
+      await storage.saveHistory(this.clips);
       return clip;
     }
     return null;
   }
 
   /**
-   * Clear in-memory history
+   * Clear in-memory history and persistent storage
    */
-  clearClips() {
+  async clearClips() {
     this.clips.length = 0;
+    await storage.saveHistory([]);
   }
 }
 

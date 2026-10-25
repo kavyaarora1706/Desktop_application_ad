@@ -1,15 +1,13 @@
 const { app, BrowserWindow, ipcMain, clipboard } = require('electron');
 const path = require('path');
 const clipboardMonitor = require('./src/clipboard.js');
+const storage = require('./src/storage.js');
 
 let mainWindow = null;
 
-// Real in-memory items (starting empty)
-const initialHistory = [];
-
 // Register IPC handlers with input validation
 function registerIpcHandlers() {
-  // Reading history
+  // Reading history (retrieves stored history from memory/storage)
   ipcMain.handle('clipvault:get-history', async () => {
     return clipboardMonitor.getClips();
   });
@@ -29,7 +27,7 @@ function registerIpcHandlers() {
     return { success: true, id };
   });
 
-  // Updating an entry
+  // Updating an entry (persists changes such as pinned state)
   ipcMain.handle('clipvault:update-entry', async (_event, payload) => {
     if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
       return { success: false, error: 'Invalid argument: payload must be an object' };
@@ -43,8 +41,8 @@ function registerIpcHandlers() {
       return { success: false, error: 'Invalid argument: updates must be a non-null object' };
     }
 
-    const updated = clipboardMonitor.updateClip(id, updates);
-    return { success: true, id, updates: updated };
+    const updated = await clipboardMonitor.updateClip(id, updates);
+    return { success: !!updated, id, updates: updated };
   });
 
   // Deleting an entry
@@ -53,19 +51,19 @@ function registerIpcHandlers() {
       return { success: false, error: 'Invalid argument: id must be a non-empty string' };
     }
 
-    const deleted = clipboardMonitor.deleteClip(id);
+    const deleted = await clipboardMonitor.deleteClip(id);
     return { success: deleted, id };
   });
 
   // Clearing history
   ipcMain.handle('clipvault:clear-history', async () => {
-    clipboardMonitor.clearClips();
+    await clipboardMonitor.clearClips();
     return { success: true };
   });
 
   // Controlling monitoring
   ipcMain.handle('clipvault:start-monitoring', async () => {
-    clipboardMonitor.start();
+    await clipboardMonitor.start();
     return { success: true, isMonitoring: true };
   });
 
@@ -102,8 +100,11 @@ function createWindow() {
 
 // App lifecycle
 app.whenReady().then(async () => {
-  // Initialize monitor with previous clipboard state so initial clipboard is not captured
-  await clipboardMonitor.init(initialHistory);
+  // Load saved history on startup from Electron's userData directory
+  const savedHistory = await storage.loadHistory();
+
+  // Initialize monitor with loaded history so existing clipboard content is not captured
+  await clipboardMonitor.init(savedHistory);
 
   // Forward new clips to renderer via clipboard:new channel
   clipboardMonitor.on('new-clip', (clipItem) => {
