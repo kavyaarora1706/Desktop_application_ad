@@ -24,12 +24,24 @@ const clipvaultApi = {
   getMonitoringStatus: () => ipcRenderer.invoke('clipvault:get-monitoring-status'),
   setMonitoring: (enabled) => ipcRenderer.invoke(enabled ? 'clipvault:start-monitoring' : 'clipvault:stop-monitoring'),
 
-  // Safe event listeners with unsubscribe handlers
+  // Controlled subscription to clipboard:new event
+  onNewClip: (callback) => {
+    if (typeof callback !== 'function') return () => {};
+    const subscription = (_event, clip) => callback(clip);
+    ipcRenderer.on('clipboard:new', subscription);
+    return () => ipcRenderer.removeListener('clipboard:new', subscription);
+  },
+  onClipboardNew: (callback) => {
+    if (typeof callback !== 'function') return () => {};
+    const subscription = (_event, clip) => callback(clip);
+    ipcRenderer.on('clipboard:new', subscription);
+    return () => ipcRenderer.removeListener('clipboard:new', subscription);
+  },
   onClipAdded: (callback) => {
     if (typeof callback !== 'function') return () => {};
     const subscription = (_event, clip) => callback(clip);
-    ipcRenderer.on('clipvault:clip-added', subscription);
-    return () => ipcRenderer.removeListener('clipvault:clip-added', subscription);
+    ipcRenderer.on('clipboard:new', subscription);
+    return () => ipcRenderer.removeListener('clipboard:new', subscription);
   },
   onHistoryUpdated: (callback) => {
     if (typeof callback !== 'function') return () => {};

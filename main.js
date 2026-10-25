@@ -1,10 +1,11 @@
 const { app, BrowserWindow, ipcMain, clipboard } = require('electron');
 const path = require('path');
+const clipboardMonitor = require('./src/clipboard.js');
 
-// In-memory placeholder state for Stage 4
-let isMonitoring = false;
+let mainWindow = null;
 
-const placeholderHistory = [
+// Initial in-memory items
+const initialHistory = [
   {
     id: 'placeholder-1',
     text: 'Welcome to ClipVault! Your clipboard history will appear here in real-time as you copy content.',
@@ -35,7 +36,7 @@ const placeholderHistory = [
 function registerIpcHandlers() {
   // Reading history
   ipcMain.handle('clipvault:get-history', async () => {
-    return [...placeholderHistory];
+    return clipboardMonitor.getClips();
   });
 
   // Copying a selected entry
@@ -44,14 +45,16 @@ function registerIpcHandlers() {
       return { success: false, error: 'Invalid argument: id must be a non-empty string' };
     }
 
-    const entry = placeholderHistory.find((item) => item.id === id);
+    const clips = clipboardMonitor.getClips();
+    const entry = clips.find((item) => item.id === id);
     if (entry && entry.text) {
+      clipboardMonitor.setLastText(entry.text);
       clipboard.writeText(entry.text);
     }
     return { success: true, id };
   });
 
-  // Updating an entry (e.g. toggle pinned, change text/tags)
+  // Updating an entry
   ipcMain.handle('clipvault:update-entry', async (_event, payload) => {
     if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
       return { success: false, error: 'Invalid argument: payload must be an object' };
@@ -65,11 +68,8 @@ function registerIpcHandlers() {
       return { success: false, error: 'Invalid argument: updates must be a non-null object' };
     }
 
-    const entry = placeholderHistory.find((item) => item.id === id);
-    if (entry) {
-      Object.assign(entry, updates);
-    }
-    return { success: true, id, updates };
+    const updated = clipboardMonitor.updateClip(id, updates);
+    return { success: true, id, updates: updated };
   });
 
   // Deleting an entry
@@ -78,37 +78,34 @@ function registerIpcHandlers() {
       return { success: false, error: 'Invalid argument: id must be a non-empty string' };
     }
 
-    const index = placeholderHistory.findIndex((item) => item.id === id);
-    if (index !== -1) {
-      placeholderHistory.splice(index, 1);
-    }
-    return { success: true, id };
+    const deleted = clipboardMonitor.deleteClip(id);
+    return { success: deleted, id };
   });
 
   // Clearing history
   ipcMain.handle('clipvault:clear-history', async () => {
-    placeholderHistory.length = 0;
+    clipboardMonitor.clearClips();
     return { success: true };
   });
 
   // Controlling monitoring
   ipcMain.handle('clipvault:start-monitoring', async () => {
-    isMonitoring = true;
+    clipboardMonitor.start();
     return { success: true, isMonitoring: true };
   });
 
   ipcMain.handle('clipvault:stop-monitoring', async () => {
-    isMonitoring = false;
+    clipboardMonitor.stop();
     return { success: true, isMonitoring: false };
   });
 
   ipcMain.handle('clipvault:get-monitoring-status', async () => {
-    return { isMonitoring };
+    return { isMonitoring: clipboardMonitor.isMonitoring };
   });
 }
 
 function createWindow() {
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 800,
     height: 560,
     minWidth: 620,
@@ -121,11 +118,28 @@ function createWindow() {
     }
   });
 
-  mainWindow.loadFile('index.html');
+  mainWindow.loadFile(path.join(__dirname, 'index.html'));
+
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
 }
 
 // App lifecycle
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  // Initialize monitor with previous clipboard state so initial clipboard is not captured
+  await clipboardMonitor.init(initialHistory);
+
+  // Forward new clips to renderer via clipboard:new channel
+  clipboardMonitor.on('new-clip', (clipItem) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('clipboard:new', clipItem);
+    }
+  });
+
+  // Start clipboard polling (~1000ms)
+  await clipboardMonitor.start();
+
   registerIpcHandlers();
   createWindow();
 
@@ -137,6 +151,7 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
+  clipboardMonitor.stop();
   if (process.platform !== 'darwin') {
     app.quit();
   }
