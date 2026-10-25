@@ -324,8 +324,35 @@ body {
   font-family: inherit;
 }
 
+.search-input::-webkit-search-cancel-button {
+  display: none;
+}
+
 .search-input::placeholder {
   color: var(--text-dim);
+}
+
+.search-clear-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  border-radius: 50%;
+  transition: all var(--duration-fast) ease;
+  flex-shrink: 0;
+}
+
+.search-clear-btn:hover {
+  color: var(--text-primary);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.search-clear-btn[hidden] {
+  display: none !important;
 }
 
 /* ==========================================================================
@@ -597,6 +624,25 @@ body {
   color: var(--text-muted);
   max-width: 300px;
   line-height: 1.5;
+}
+
+.btn-clear-search {
+  margin-top: 14px;
+  background-color: var(--accent-green-subtle);
+  border: 1px solid var(--border-accent);
+  color: var(--accent-green-light);
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all var(--duration-fast) ease;
+}
+
+.btn-clear-search:hover {
+  background-color: rgba(16, 185, 129, 0.22);
+  color: #ffffff;
+  border-color: var(--accent-green);
 }
 
 @keyframes fadeIn {
