@@ -98,6 +98,39 @@
             </button>
           </div>
         </div>
+
+        <!-- Category Filter Buttons Bar -->
+        <div class="category-filters" role="group" aria-label="Filter by category">
+          <button type="button" class="category-filter-btn active" data-category="all" id="filter-all" aria-pressed="true">
+            <span>All</span>
+            <span class="category-count" id="count-cat-all">0</span>
+          </button>
+          <button type="button" class="category-filter-btn" data-category="link" id="filter-link" aria-pressed="false">
+            <svg class="cat-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+            <span>Links</span>
+            <span class="category-count" id="count-cat-link">0</span>
+          </button>
+          <button type="button" class="category-filter-btn" data-category="code" id="filter-code" aria-pressed="false">
+            <svg class="cat-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="16 18 22 12 16 6"></polyline>
+              <polyline points="8 6 2 12 8 18"></polyline>
+            </svg>
+            <span>Code</span>
+            <span class="category-count" id="count-cat-code">0</span>
+          </button>
+          <button type="button" class="category-filter-btn" data-category="text" id="filter-text" aria-pressed="false">
+            <svg class="cat-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="4" y1="7" x2="20" y2="7"></line>
+              <line x1="4" y1="12" x2="20" y2="12"></line>
+              <line x1="4" y1="17" x2="14" y2="17"></line>
+            </svg>
+            <span>Text</span>
+            <span class="category-count" id="count-cat-text">0</span>
+          </button>
+        </div>
       </header>
 
       <!-- Clipboard History Container -->

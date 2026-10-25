@@ -4,6 +4,7 @@
 let clips = [];
 let searchQuery = '';
 let currentView = 'all'; // 'all' | 'pinned'
+let currentCategory = 'all'; // 'all' | 'link' | 'code' | 'text'
 
 // DOM Element References
 let clipList = null;
@@ -27,6 +28,11 @@ let btnConfirmClear = null;
 let checkKeepPinned = null;
 let modalPinnedCount = null;
 let modalPinnedOption = null;
+let categoryFilterBtns = null;
+let countCatAll = null;
+let countCatLink = null;
+let countCatCode = null;
+let countCatText = null;
 
 /**
  * Format timestamp into readable relative time
@@ -77,7 +83,15 @@ function getVisibleClips() {
     ? clips.filter((c) => c.pinned)
     : clips;
 
-  // Step 2: Filter by search query if active
+  // Step 2: Filter by category if not 'all'
+  if (currentCategory !== 'all') {
+    baseItems = baseItems.filter((clip) => {
+      const type = clip.type || 'text';
+      return type === currentCategory;
+    });
+  }
+
+  // Step 3: Filter by search query if active
   const query = searchQuery.trim().toLowerCase();
   if (query) {
     baseItems = baseItems.filter((clip) => {
@@ -86,7 +100,7 @@ function getVisibleClips() {
     });
   }
 
-  // Step 3: Sort: pinned entries first in All Clips, newest first in Pinned
+  // Step 4: Sort: pinned entries first in All Clips, newest first in Pinned
   if (currentView === 'all') {
     return sortClips(baseItems);
   }
@@ -115,22 +129,64 @@ function updateCounts(visibleCount) {
     btnClearHistory.disabled = total === 0;
   }
 
+  // Update dynamic category button counts
+  updateCategoryCounts();
+
   if (contentSubtitle) {
     const activeQuery = searchQuery.trim();
+    const catLabel = currentCategory !== 'all' ? ` ${currentCategory}` : '';
     if (currentView === 'pinned') {
       if (activeQuery) {
-        contentSubtitle.textContent = `${visibleCount} of ${pinnedTotal} pinned clip${pinnedTotal === 1 ? '' : 's'} matching`;
+        contentSubtitle.textContent = `${visibleCount} of ${pinnedTotal} pinned${catLabel} clip${pinnedTotal === 1 ? '' : 's'} matching`;
       } else {
-        contentSubtitle.textContent = `${pinnedTotal} pinned clip${pinnedTotal === 1 ? '' : 's'} stored`;
+        contentSubtitle.textContent = `${visibleCount} pinned${catLabel} clip${visibleCount === 1 ? '' : 's'} stored`;
       }
     } else {
       if (activeQuery) {
-        contentSubtitle.textContent = `${visibleCount} of ${total} clip${total === 1 ? '' : 's'} matching`;
+        contentSubtitle.textContent = `${visibleCount} of ${total}${catLabel} clip${total === 1 ? '' : 's'} matching`;
       } else {
-        contentSubtitle.textContent = `${total} clip${total === 1 ? '' : 's'} stored`;
+        contentSubtitle.textContent = `${visibleCount}${catLabel} clip${visibleCount === 1 ? '' : 's'} stored`;
       }
     }
   }
+}
+
+/**
+ * Update counts for category filter buttons
+ */
+function updateCategoryCounts() {
+  const base = currentView === 'pinned'
+    ? clips.filter((c) => c.pinned)
+    : clips;
+
+  const allCount = base.length;
+  const linkCount = base.filter((c) => (c.type || 'text') === 'link').length;
+  const codeCount = base.filter((c) => (c.type || 'text') === 'code').length;
+  const textCount = base.filter((c) => (c.type || 'text') === 'text').length;
+
+  if (countCatAll) countCatAll.textContent = allCount;
+  if (countCatLink) countCatLink.textContent = linkCount;
+  if (countCatCode) countCatCode.textContent = codeCount;
+  if (countCatText) countCatText.textContent = textCount;
+}
+
+/**
+ * Switches the active category filter (all, link, code, text)
+ * @param {'all' | 'link' | 'code' | 'text'} category
+ */
+function switchCategory(category) {
+  if (currentCategory === category) return;
+  currentCategory = category;
+
+  if (categoryFilterBtns) {
+    categoryFilterBtns.forEach((btn) => {
+      const isActive = btn.dataset.category === category;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-pressed', String(isActive));
+    });
+  }
+
+  renderClipsView();
 }
 
 /**
@@ -288,11 +344,13 @@ function createClipElement(clip) {
   const meta = document.createElement('div');
   meta.className = 'clip-meta';
 
-  // Type badge
+  // Small Category Label Badge
   const badge = document.createElement('span');
-  const typeName = clip.type || 'text';
+  const typeName = ['link', 'code', 'text'].includes(clip.type) ? clip.type : 'text';
   badge.className = `badge badge-${typeName}`;
-  badge.textContent = typeName;
+  const categoryLabels = { link: 'Link', code: 'Code', text: 'Text' };
+  badge.textContent = categoryLabels[typeName] || 'Text';
+  badge.title = `Category: ${categoryLabels[typeName] || 'Text'}`;
   meta.appendChild(badge);
 
   // Pin status indicator
@@ -469,13 +527,18 @@ function renderClipsView() {
 
   const visibleClips = getVisibleClips();
 
-  // Case 2: Clips exist in this view, but none match the search query
+  // Case 2: Clips exist in this view, but none match the search query or category filter
   if (visibleClips.length === 0) {
     if (noResultsState) {
       noResultsState.hidden = false;
       if (noResultsText) {
-        const viewLabel = currentView === 'pinned' ? 'pinned clips' : 'clips';
-        noResultsText.textContent = `No ${viewLabel} match "${activeQuery}". Try a different keyword.`;
+        const catName = currentCategory !== 'all' ? `${currentCategory} ` : '';
+        const viewLabel = currentView === 'pinned' ? `pinned ${catName}clips` : `${catName}clips`;
+        if (activeQuery) {
+          noResultsText.textContent = `No ${viewLabel} match "${activeQuery}". Try a different keyword.`;
+        } else {
+          noResultsText.textContent = `No ${viewLabel} found in this view.`;
+        }
       }
     }
     clipList.hidden = true;
@@ -556,7 +619,24 @@ function setupSearchListeners() {
   if (btnResetSearch) {
     btnResetSearch.addEventListener('click', () => {
       clearSearch();
+      if (currentCategory !== 'all') {
+        switchCategory('all');
+      }
       searchInput.focus();
+    });
+  }
+}
+
+/**
+ * Set up category filter button event listeners
+ */
+function setupCategoryListeners() {
+  if (categoryFilterBtns) {
+    categoryFilterBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const cat = btn.dataset.category || 'all';
+        switchCategory(cat);
+      });
     });
   }
 }
@@ -689,9 +769,15 @@ async function initRenderer() {
   checkKeepPinned = document.getElementById('check-keep-pinned');
   modalPinnedCount = document.getElementById('modal-pinned-count');
   modalPinnedOption = document.getElementById('modal-pinned-option');
+  categoryFilterBtns = document.querySelectorAll('.category-filter-btn');
+  countCatAll = document.getElementById('count-cat-all');
+  countCatLink = document.getElementById('count-cat-link');
+  countCatCode = document.getElementById('count-cat-code');
+  countCatText = document.getElementById('count-cat-text');
 
   setupSearchListeners();
   setupNavigationListeners();
+  setupCategoryListeners();
   setupClearHistoryListeners();
 
   // Load existing history from Electron main process
@@ -699,7 +785,13 @@ async function initRenderer() {
     try {
       const fetched = await window.clipvault.getHistory();
       clips = Array.isArray(fetched)
-        ? [...fetched].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+        ? fetched.map((item) => {
+            // Guarantee valid category on every clip for backwards compatibility
+            if (!item.type || !['link', 'code', 'text'].includes(item.type)) {
+              item.type = 'text';
+            }
+            return item;
+          }).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
         : [];
       renderClipsView();
     } catch (err) {

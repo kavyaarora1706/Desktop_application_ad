@@ -399,6 +399,71 @@ body {
 }
 
 /* ==========================================================================
+   Category Filter Buttons
+   ========================================================================== */
+.category-filters {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.category-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-input);
+  border-radius: 7px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--duration-fast) ease;
+  outline: none;
+  user-select: none;
+}
+
+.category-filter-btn:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary);
+  border-color: var(--border-medium);
+}
+
+.category-filter-btn.active {
+  background-color: var(--accent-green-subtle);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: var(--text-primary);
+  font-weight: 600;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.12);
+}
+
+.category-filter-btn:focus-visible {
+  box-shadow: 0 0 0 2px var(--border-accent);
+}
+
+.cat-icon {
+  flex-shrink: 0;
+  color: currentColor;
+}
+
+.category-count {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.category-filter-btn.active .category-count {
+  background-color: rgba(16, 185, 129, 0.22);
+  color: var(--accent-green-light);
+}
+
+/* ==========================================================================
    Clipboard History Container & Cards
    ========================================================================== */
 .clipboard-history {
@@ -471,23 +536,27 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.4px;
   line-height: 1.35;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .badge-text {
   background-color: var(--badge-text-bg);
   color: var(--badge-text-color);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .badge-code {
   background-color: var(--badge-code-bg);
   color: var(--badge-code-color);
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.25);
 }
 
 .badge-link {
-  background-color: var(--badge-link-bg);
-  color: var(--badge-link-color);
-  border: 1px solid rgba(52, 211, 153, 0.2);
+  background-color: rgba(45, 212, 191, 0.14);
+  color: #2dd4bf;
+  border: 1px solid rgba(45, 212, 191, 0.25);
 }
 
 .pin-status {
